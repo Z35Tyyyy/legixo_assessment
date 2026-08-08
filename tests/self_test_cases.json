@@ -1,0 +1,147 @@
+[
+  {
+    "question": "What is the notice period in the Bluecrest Analytics employment agreement?",
+    "expected_citation_files": [
+      "02_employment_agreement_excerpt.md"
+    ],
+    "expected_answer_keywords": [
+      "60 day"
+    ],
+    "keywords_any": false,
+    "answerable": true,
+    "notes": "PASS (2026-08-09): answered 60 days written notice; cited 02_employment_agreement_excerpt.md"
+  },
+  {
+    "question": "How long does the non-compete last after leaving Bluecrest Analytics?",
+    "expected_citation_files": [
+      "02_employment_agreement_excerpt.md"
+    ],
+    "expected_answer_keywords": [
+      "12 month"
+    ],
+    "keywords_any": false,
+    "answerable": true,
+    "notes": "PASS (2026-08-09): answered 12 months; cited 02_employment_agreement_excerpt.md"
+  },
+  {
+    "question": "Which court is hearing Arvind Mehta v. Northfield Logistics?",
+    "expected_citation_files": [
+      "01_matter_memo_arvind_v_northfield.md"
+    ],
+    "expected_answer_keywords": [
+      "riverside"
+    ],
+    "keywords_any": false,
+    "answerable": true,
+    "notes": "PASS (2026-08-09): answered District Court, Riverside Bench; cited 01_matter_memo_arvind_v_northfield.md"
+  },
+  {
+    "question": "When was the written contract signed in the Northfield Logistics matter?",
+    "expected_citation_files": [
+      "01_matter_memo_arvind_v_northfield.md"
+    ],
+    "expected_answer_keywords": [
+      "12 january 2024"
+    ],
+    "keywords_any": false,
+    "answerable": true,
+    "notes": "PASS (2026-08-09): answered 12 January 2024; cited 01_matter_memo_arvind_v_northfield.md"
+  },
+  {
+    "question": "How many days before the listed date must written arguments be filed?",
+    "expected_citation_files": [
+      "03_hearing_notice_template.md"
+    ],
+    "expected_answer_keywords": [
+      "seven"
+    ],
+    "keywords_any": false,
+    "answerable": true,
+    "notes": "PASS (2026-08-09): answered seven clear days; cited 03_hearing_notice_template.md"
+  },
+  {
+    "question": "What interest rate applies to delayed payments when a contract fixes no rate?",
+    "expected_citation_files": [
+      "04_statute_style_excerpt_fictional.md"
+    ],
+    "expected_answer_keywords": [
+      "9%"
+    ],
+    "keywords_any": false,
+    "answerable": true,
+    "notes": "PASS (2026-08-09): answered 9% simple interest per year; cited 04_statute_style_excerpt_fictional.md"
+  },
+  {
+    "question": "How long is mandatory mediation under Section 14 of the Riverside Commercial Courts Act?",
+    "expected_citation_files": [
+      "04_statute_style_excerpt_fictional.md"
+    ],
+    "expected_answer_keywords": [
+      "30 day"
+    ],
+    "keywords_any": false,
+    "answerable": true,
+    "notes": "PASS (2026-08-09): answered 30 days; cited 04_statute_style_excerpt_fictional.md"
+  },
+  {
+    "question": "What percentage of open invoices did Northfield offer to pay in settlement?",
+    "expected_citation_files": [
+      "05_counsel_notes_settlement.md"
+    ],
+    "expected_answer_keywords": [
+      "70"
+    ],
+    "keywords_any": false,
+    "answerable": true,
+    "notes": "PASS (2026-08-09): answered 70% of open invoices; cited 05_counsel_notes_settlement.md"
+  },
+  {
+    "question": "What is the monthly rent for Unit 4B at Harbor View Tower?",
+    "expected_citation_files": [
+      "06_property_lease_clause.md"
+    ],
+    "expected_answer_keywords": [
+      "45,000"
+    ],
+    "keywords_any": false,
+    "answerable": true,
+    "notes": "PASS (2026-08-09): answered Rs 45,000; cited 06_property_lease_clause.md (2 citations)"
+  },
+  {
+    "question": "Is subletting allowed under the Harbor View Tower lease?",
+    "expected_citation_files": [
+      "06_property_lease_clause.md"
+    ],
+    "expected_answer_keywords": [
+      "not allowed",
+      "without written consent"
+    ],
+    "keywords_any": true,
+    "answerable": true,
+    "notes": "PASS (2026-08-09): answered not allowed without written consent of the lessor; cited 06_property_lease_clause.md"
+  },
+  {
+    "question": "What is the capital of France?",
+    "expected_citation_files": [],
+    "expected_answer_keywords": [],
+    "keywords_any": false,
+    "answerable": false,
+    "notes": "PASS (2026-08-09): refused with 'I cannot find the answer...' and 0 citations"
+  },
+  {
+    "question": "What does the Indian Contract Act, 1872 say about liquidated damages?",
+    "expected_citation_files": [],
+    "expected_answer_keywords": [],
+    "keywords_any": false,
+    "answerable": false,
+    "notes": "PASS (2026-08-09): refused with 'I cannot find the answer...' and 0 citations"
+  },
+  {
+    "question": "Who won the 2023 Cricket World Cup?",
+    "expected_citation_files": [],
+    "expected_answer_keywords": [],
+    "keywords_any": false,
+    "answerable": false,
+    "notes": "PASS (2026-08-09): refused with 'I cannot find the answer...' and 0 citations"
+  }
+]
