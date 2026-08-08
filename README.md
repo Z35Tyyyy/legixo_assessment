@@ -146,6 +146,26 @@ curl -s -X POST http://127.0.0.1:8000/ask \
 }
 ```
 
+Error responses (exemplars — standard FastAPI `detail` envelope):
+
+```json
+// 500 — server started without keys (.env missing or placeholder values)
+{
+  "detail": "Missing required environment variable GOOGLE_API_KEY. Copy .env.example to .env and fill in your keys (see README)."
+}
+```
+
+```json
+// 502 — upstream provider failure, e.g. Gemini free-tier quota exhausted
+{
+  "detail": "Upstream error: Error calling model 'gemini-flash-latest' (RESOURCE_EXHAUSTED): 429 RESOURCE_EXHAUSTED. ... Please retry in 23s."
+}
+```
+
+The free tier allows ~20 requests/minute and each question costs 2+ model calls
+(grade + generate, plus rewrites on the bad path), so space manual requests
+~30s apart; the self-test suite backs off and retries automatically.
+
 Postman: import as a raw `POST http://127.0.0.1:8000/ask` request with the JSON
 bodies above, header `Content-Type: application/json`. Interactive docs are also
 available at http://127.0.0.1:8000/docs.
