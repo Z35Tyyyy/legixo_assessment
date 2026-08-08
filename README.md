@@ -31,7 +31,9 @@ Requires Python 3.10+.
 ```bash
 git clone <this-repo> && cd <this-repo>
 python -m venv .venv
-# Windows: .venv\Scripts\activate     macOS/Linux: source .venv/bin/activate
+# Windows (cmd/PowerShell): .venv\Scripts\activate
+# Windows (Git Bash):       source .venv/Scripts/activate
+# macOS/Linux:              source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env    # then edit .env with your real keys
 ```
