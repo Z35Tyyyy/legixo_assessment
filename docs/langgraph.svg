@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 680" font-family="'Segoe Print', 'Comic Sans MS', cursive" font-size="18">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#1e1e1e"/>
+    </marker>
+  </defs>
+  <rect width="900" height="680" fill="#ffffff"/>
+
+  <!-- retrieve -->
+  <rect x="300" y="40" width="200" height="60" rx="10" fill="#a5d8ff" stroke="#1e1e1e" stroke-width="1.5"/>
+  <text x="400" y="76" text-anchor="middle">retrieve</text>
+
+  <!-- grade_chunks (branch node) -->
+  <polygon points="400,160 530,210 400,260 270,210" fill="#ffec99" stroke="#1e1e1e" stroke-width="1.5"/>
+  <text x="400" y="216" text-anchor="middle">grade_chunks</text>
+
+  <!-- rewrite_query -->
+  <rect x="30" y="180" width="190" height="60" rx="10" fill="#ffd8a8" stroke="#1e1e1e" stroke-width="1.5"/>
+  <text x="125" y="216" text-anchor="middle">rewrite_query</text>
+
+  <!-- generate_answer -->
+  <rect x="290" y="330" width="220" height="60" rx="10" fill="#b2f2bb" stroke="#1e1e1e" stroke-width="1.5"/>
+  <text x="400" y="366" text-anchor="middle">generate_answer</text>
+
+  <!-- no_answer -->
+  <rect x="580" y="330" width="180" height="60" rx="10" fill="#ffc9c9" stroke="#1e1e1e" stroke-width="1.5"/>
+  <text x="670" y="366" text-anchor="middle">no_answer</text>
+
+  <!-- validate_citations -->
+  <rect x="280" y="460" width="240" height="60" rx="10" fill="#b2f2bb" stroke="#1e1e1e" stroke-width="1.5"/>
+  <text x="400" y="496" text-anchor="middle">validate_citations</text>
+
+  <!-- END -->
+  <ellipse cx="400" cy="607" rx="70" ry="28" fill="#e9ecef" stroke="#1e1e1e" stroke-width="1.5"/>
+  <text x="400" y="614" text-anchor="middle">END</text>
+
+  <!-- arrows -->
+  <line x1="400" y1="100" x2="400" y2="156" stroke="#1e1e1e" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="400" y1="260" x2="400" y2="326" stroke="#1e1e1e" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="270" y1="210" x2="224" y2="210" stroke="#1e1e1e" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <polyline points="125,180 125,70 296,70" fill="none" stroke="#1e1e1e" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <polyline points="530,210 670,210 670,326" fill="none" stroke="#1e1e1e" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="400" y1="390" x2="400" y2="456" stroke="#1e1e1e" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="400" y1="520" x2="400" y2="575" stroke="#1e1e1e" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <polyline points="670,390 670,607 474,607" fill="none" stroke="#1e1e1e" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- edge labels -->
+  <text x="410" y="295" font-size="15" fill="#2f9e44">sufficient</text>
+  <text x="138" y="145" font-size="15" fill="#e8590c">insufficient</text>
+  <text x="138" y="165" font-size="15" fill="#e8590c">loops &lt; 2</text>
+  <text x="558" y="178" font-size="15" fill="#e03131">insufficient</text>
+  <text x="558" y="198" font-size="15" fill="#e03131">loops = 2</text>
+  <text x="132" y="270" font-size="14" fill="#495057">(loop back to retrieve)</text>
+</svg>

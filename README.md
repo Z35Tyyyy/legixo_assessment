@@ -10,19 +10,11 @@ works on the free tier).
 
 ## Architecture
 
-The Q&A flow is a LangGraph `StateGraph` (`app/graph.py`):
+The Q&A flow is a LangGraph `StateGraph` (`app/graph.py`). Full node-by-node
+map in [`docs/langgraph.md`](docs/langgraph.md) (editable Excalidraw source:
+[`docs/langgraph.excalidraw`](docs/langgraph.excalidraw)):
 
-```mermaid
-graph TD
-    A[retrieve<br/>embed query, Pinecone top-k] --> B{grade_chunks<br/>LLM judges chunk quality}
-    B -- sufficient --> C[generate_answer<br/>answer ONLY from chunks + cite chunk IDs]
-    C --> D[validate_citations<br/>drop any cited ID not actually retrieved]
-    D --> E([END])
-    B -- "insufficient<br/>(loops < 2)" --> F[rewrite_query<br/>LLM rephrases the search query]
-    F --> A
-    B -- "insufficient<br/>(loops exhausted)" --> G[no_answer<br/>refuse: not in documents]
-    G --> E
-```
+![LangGraph workflow diagram](docs/langgraph.svg)
 
 - **Branch node:** `grade_chunks` routes between the good path (generate) and the
   bad path (rewrite & retry, or refuse).
@@ -53,7 +45,7 @@ cp .env.example .env    # then edit .env with your real keys
 | `PINECONE_INDEX_NAME` | no | Default `legixo-takehome` |
 | `PINECONE_NAMESPACE` | no | Default `corpus` |
 | `PINECONE_CLOUD` / `PINECONE_REGION` | no | Default `aws` / `us-east-1` (serverless free tier) |
-| `GEMINI_CHAT_MODEL` / `GEMINI_EMBED_MODEL` | no | Defaults `gemini-2.5-flash` / `models/gemini-embedding-001` (truncated to 768 dims to match the index) |
+| `GEMINI_CHAT_MODEL` / `GEMINI_EMBED_MODEL` | no | Defaults `gemini-flash-latest` / `models/gemini-embedding-001` (truncated to 768 dims to match the index) |
 
 Keys live only in `.env` (gitignored). `.env.example` contains placeholders only.
 
@@ -166,10 +158,14 @@ With the corpus ingested and the server running:
 python tests/self_test.py
 ```
 
-Runs 13 cases: 10 answerable questions (asserting expected facts in the answer
-**and** that citations point at the correct source file) and 3 out-of-scope
-questions (asserting refusal with zero citations). Exits non-zero on failure.
-Point at a different host with `API_URL=http://host:port`.
+The cases live in [`tests/self_test_cases.json`](tests/self_test_cases.json) —
+13 entries with columns `question`, `expected_citation_files`,
+`expected_answer_keywords`, `answerable`, and `notes` (pass/fail observations
+from actual runs). `tests/self_test.py` loads that file and runs every case:
+10 answerable questions (asserting expected facts in the answer **and** that
+citations point at the correct source file) and 3 out-of-scope questions
+(asserting refusal with zero citations). Exits non-zero on failure. Point at a
+different host with `API_URL=http://host:port`.
 
 The suite is paced for the Gemini free tier (~10 requests/min): it pauses
 between cases (`SELF_TEST_PAUSE`, default 5s) and backs off and retries when it

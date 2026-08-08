@@ -43,6 +43,24 @@ class GraphState(TypedDict):
     trace: Annotated[list[str], operator.add]
 
 
+def _message_text(message) -> str:
+    """Normalize an LLM reply to plain text.
+
+    Newer Gemini models return `content` as a list of typed blocks (text and
+    thinking parts) rather than a plain string.
+    """
+    content = message.content
+    if isinstance(content, str):
+        return content
+    parts = []
+    for item in content:
+        if isinstance(item, str):
+            parts.append(item)
+        elif isinstance(item, dict) and item.get("type") == "text":
+            parts.append(item.get("text", ""))
+    return "".join(parts)
+
+
 def _extract_json(text: str) -> dict:
     """Parse a JSON object from an LLM reply, tolerating ``` fences."""
     cleaned = re.sub(r"^```(?:json)?|```$", "", text.strip(), flags=re.MULTILINE).strip()
@@ -87,7 +105,7 @@ class QAService:
             "Can the question be answered using ONLY these chunks? "
             "Reply with exactly one word: sufficient or insufficient."
         )
-        reply = self.chat.invoke([HumanMessage(content=prompt)]).content.strip().lower()
+        reply = _message_text(self.chat.invoke([HumanMessage(content=prompt)])).strip().lower()
         grade = "sufficient" if "insufficient" not in reply else "insufficient"
         if not state["chunks"]:
             grade = "insufficient"
@@ -101,7 +119,7 @@ class QAService:
             f"Question: {state['question']}\n"
             f"Previous query: {state.get('query') or state['question']}"
         )
-        new_query = self.chat.invoke([HumanMessage(content=prompt)]).content.strip()
+        new_query = _message_text(self.chat.invoke([HumanMessage(content=prompt)])).strip()
         loops = state.get("loops", 0) + 1
         return {
             "query": new_query,
@@ -124,7 +142,7 @@ class QAService:
             '{"found": true|false, "answer": "<concise answer>", '
             '"cited_chunk_ids": ["<chunk_id of every chunk you used>"]}'
         )
-        reply = self.chat.invoke([HumanMessage(content=prompt)]).content
+        reply = _message_text(self.chat.invoke([HumanMessage(content=prompt)]))
         try:
             data = _extract_json(reply)
         except (ValueError, json.JSONDecodeError):

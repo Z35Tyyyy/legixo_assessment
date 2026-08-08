@@ -50,6 +50,6 @@ def get_settings() -> Settings:
         namespace=os.getenv("PINECONE_NAMESPACE", "corpus"),
         cloud=os.getenv("PINECONE_CLOUD", "aws"),
         region=os.getenv("PINECONE_REGION", "us-east-1"),
-        chat_model=os.getenv("GEMINI_CHAT_MODEL", "gemini-2.5-flash"),
+        chat_model=os.getenv("GEMINI_CHAT_MODEL", "gemini-flash-latest"),
         embed_model=os.getenv("GEMINI_EMBED_MODEL", "models/gemini-embedding-001"),
     )
