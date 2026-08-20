@@ -46,7 +46,7 @@ def get_settings() -> Settings:
     return Settings(
         google_api_key=_require("GOOGLE_API_KEY"),
         pinecone_api_key=_require("PINECONE_API_KEY"),
-        index_name=os.getenv("PINECONE_INDEX_NAME", "grounded-qa"),
+        index_name=os.getenv("PINECONE_INDEX_NAME", "sourcebound"),
         namespace=os.getenv("PINECONE_NAMESPACE", "corpus"),
         cloud=os.getenv("PINECONE_CLOUD", "aws"),
         region=os.getenv("PINECONE_REGION", "us-east-1"),

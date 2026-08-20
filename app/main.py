@@ -16,7 +16,7 @@ from app.config import ConfigError
 from app.graph import QAService
 
 app = FastAPI(
-    title="Grounded Document Q&A API",
+    title="Sourcebound",
     description="Answers questions only from an indexed document set, with verified citations.",
 )
 

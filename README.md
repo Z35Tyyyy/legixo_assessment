@@ -1,4 +1,6 @@
-# Grounded Document Q&A API
+# Sourcebound
+
+**Answers bound to their sources.**
 
 A retrieval-augmented question-answering API that answers **only from the
 documents you give it** and cites the exact chunks each answer came from. When
@@ -69,7 +71,7 @@ Then ask a question:
 ```bash
 curl -s -X POST http://127.0.0.1:8000/ask \
   -H "Content-Type: application/json" \
-  -d '{"question": "What is the notice period in the Bluecrest employment agreement?"}'
+  -d '{"question": "What is the notice period in the employment agreement?"}'
 ```
 
 ### Configuration
@@ -78,7 +80,7 @@ curl -s -X POST http://127.0.0.1:8000/ask \
 |---|---|---|
 | `GOOGLE_API_KEY` | yes | Google AI Studio key (free tier OK): https://aistudio.google.com/apikey |
 | `PINECONE_API_KEY` | yes | From https://app.pinecone.io |
-| `PINECONE_INDEX_NAME` | no | Default `grounded-qa` |
+| `PINECONE_INDEX_NAME` | no | Default `sourcebound` |
 | `PINECONE_NAMESPACE` | no | Default `corpus` |
 | `PINECONE_CLOUD` / `PINECONE_REGION` | no | Default `aws` / `us-east-1` (serverless free tier) |
 | `GEMINI_CHAT_MODEL` / `GEMINI_EMBED_MODEL` | no | Defaults `gemini-flash-latest` / `models/gemini-embedding-001` (truncated to 768 dims to match the index) |
@@ -137,7 +139,7 @@ Answerable question:
 ```bash
 curl -s -X POST http://127.0.0.1:8000/ask \
   -H "Content-Type: application/json" \
-  -d '{"question": "What is the notice period in the Bluecrest employment agreement?", "include_trace": true}'
+  -d '{"question": "What is the notice period in the employment agreement?", "include_trace": true}'
 ```
 
 ```json
