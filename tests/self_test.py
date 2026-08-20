@@ -27,7 +27,7 @@ RATE_LIMIT_RETRIES = 3
 RATE_LIMIT_BACKOFF = 40  # seconds
 
 # Cases live in tests/self_test_cases.json (question, expected citation files,
-# expected answer keywords, answerable flag, and pass/fail notes per the brief).
+# expected answer keywords, answerable flag, and notes from the last run).
 CASES_FILE = Path(__file__).resolve().parent / "self_test_cases.json"
 CASES = json.loads(CASES_FILE.read_text(encoding="utf-8"))
 
