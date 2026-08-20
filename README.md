@@ -1,12 +1,33 @@
-# Legixo Take-Home: Grounded Q&A API
+# Sourcebound
 
-A question-answering HTTP API over a small fictional legal corpus. Questions are
-answered **only from the document set**, every answer cites the real chunks it
-came from, and out-of-scope questions are refused.
+**Answers bound to their sources.**
 
-**Stack:** Python 3.10+ · FastAPI · **LangGraph** (workflow orchestration) ·
-**Pinecone** (serverless vector index) · Google **Gemini** (chat + embeddings,
-works on the free tier).
+A retrieval-augmented question-answering API that answers **only from the
+documents you give it** and cites the exact chunks each answer came from. When
+the documents don't contain the answer, it says so instead of guessing.
+
+Built with FastAPI, LangGraph, Pinecone, and Google Gemini.
+
+## Why this exists
+
+Most RAG demos will happily answer from the model's world knowledge when
+retrieval comes up short, and will just as happily invent a citation that looks
+plausible. Both failures are invisible to the person reading the answer, which
+makes the system untrustworthy exactly where grounding matters most — legal,
+compliance, policy, and contract documents.
+
+This project treats grounding as an architectural property rather than a prompt
+instruction:
+
+- **Retrieval quality is judged before answering.** A dedicated grading step
+  decides whether the retrieved chunks can support an answer at all, and routes
+  to a retry or an honest refusal when they can't.
+- **Citations are verified, not trusted.** Every chunk ID the model cites is
+  checked against the set actually returned by the vector store. Anything that
+  doesn't match is dropped, and if nothing survives, the answer is replaced with
+  a refusal — so a fabricated citation can never reach the caller.
+- **The workflow cannot spin forever.** Query rewrites are capped and the graph
+  carries a hard recursion limit.
 
 ## Architecture
 
@@ -16,89 +37,100 @@ map in [`docs/langgraph.md`](docs/langgraph.md) (editable Excalidraw source:
 
 ![LangGraph workflow diagram](docs/langgraph.svg)
 
-- **Branch node:** `grade_chunks` routes between the good path (generate) and the
-  bad path (rewrite & retry, or refuse).
-- **Loop limit:** at most 2 query rewrites (`max_retrieval_loops`), plus a hard
-  LangGraph `recursion_limit` backstop — the graph can never spin forever.
-- **No fabricated citations:** `validate_citations` keeps only cited chunk IDs
-  that were actually retrieved from Pinecone this run. If nothing valid remains,
-  the API refuses instead of answering.
+| Node | Role |
+|---|---|
+| `retrieve` | Embed the current query, fetch top-k chunks from Pinecone |
+| `grade_chunks` | Branch point — are these chunks good enough to answer from? |
+| `rewrite_query` | Bad path: rephrase the query and retry (capped at 2 rewrites) |
+| `generate_answer` | Good path: answer strictly from the chunks, declaring which it used |
+| `validate_citations` | Drop unverifiable citations; refuse if none survive |
+| `no_answer` | Bad path exhausted: refuse cleanly with zero citations |
 
-## Setup
+## Stack
 
-Requires Python 3.10+.
+Python 3.10+ · FastAPI · LangGraph · Pinecone (serverless) · Google Gemini
+(chat + embeddings, runs on the free tier).
+
+## Quickstart
 
 ```bash
-git clone <this-repo> && cd <this-repo>
+git clone <your-repo-url> && cd <repo>
 python -m venv .venv
 # Windows (cmd/PowerShell): .venv\Scripts\activate
 # Windows (Git Bash):       source .venv/Scripts/activate
 # macOS/Linux:              source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env    # then edit .env with your real keys
+
+cp .env.example .env      # then edit .env with your real keys
+python ingest.py          # chunk, embed, and upsert the corpus
+uvicorn app.main:app --reload
 ```
 
-### Environment variables (`.env`)
+Then ask a question:
+
+```bash
+curl -s -X POST http://127.0.0.1:8000/ask \
+  -H "Content-Type: application/json" \
+  -d '{"question": "What is the notice period in the employment agreement?"}'
+```
+
+### Configuration
 
 | Variable | Required | Notes |
 |---|---|---|
 | `GOOGLE_API_KEY` | yes | Google AI Studio key (free tier OK): https://aistudio.google.com/apikey |
 | `PINECONE_API_KEY` | yes | From https://app.pinecone.io |
-| `PINECONE_INDEX_NAME` | no | Default `legixo-takehome` |
+| `PINECONE_INDEX_NAME` | no | Default `sourcebound` |
 | `PINECONE_NAMESPACE` | no | Default `corpus` |
 | `PINECONE_CLOUD` / `PINECONE_REGION` | no | Default `aws` / `us-east-1` (serverless free tier) |
 | `GEMINI_CHAT_MODEL` / `GEMINI_EMBED_MODEL` | no | Defaults `gemini-flash-latest` / `models/gemini-embedding-001` (truncated to 768 dims to match the index) |
 
-Keys live only in `.env` (gitignored). `.env.example` contains placeholders only.
+Keys live only in `.env`, which is gitignored. `.env.example` holds placeholders
+only — never commit real credentials.
+
+## Using your own documents
+
+Drop markdown files into `data/corpus/` and re-run `python ingest.py`. The
+shipped corpus is a small set of **fictional** legal-style notes (invented
+parties, courts, and statutes) used as sample data — replace it with whatever
+document set you care about.
 
 ## Ingestion
 
 ```bash
-python ingest.py
+python ingest.py            # incremental: re-upserts in place
+python ingest.py --reset    # wipe the namespace first, then ingest fresh
 ```
 
-This chunks every markdown file in `data/corpus/` by `##` section, embeds the
-chunks with Gemini (`gemini-embedding-001`, truncated to 768-dim), **creates the Pinecone
-serverless index automatically if it doesn't exist** (cosine, dim 768), and
-upserts vectors with metadata `{chunk_id, source_file, section, text}`.
+**Index creation is automatic.** `ensure_index()` (`app/vectorstore.py`) creates
+a serverless index if one doesn't exist — name from `PINECONE_INDEX_NAME`,
+dimension **768**, metric **cosine**, on `PINECONE_CLOUD`/`PINECONE_REGION` — and
+waits until it reports ready. Creating an index with those settings by hand in
+the Pinecone console works too.
 
-**What happens if you run ingest twice?** Nothing bad — chunk IDs are
-deterministic (`<file-stem>::<section-slug>::<n>`), so a second run upserts the
-same IDs in place and the vector count stays constant. To rebuild from scratch
-(e.g. after deleting a corpus file), wipe the namespace first:
+**Chunking.** Files are split on markdown `##` sections (with an
+overlapping-window fallback for oversized sections), so each chunk stays
+semantically self-contained. Every vector carries metadata: `chunk_id`,
+`source_file`, `section`, and the chunk `text` — the last of which is what makes
+citations possible without a second lookup.
 
-```bash
-python ingest.py --reset
-```
+**Running ingest twice is safe.** Chunk IDs are deterministic
+(`<file-stem>::<section-slug>::<n>`), so a second run upserts the *same* point
+IDs in place and the namespace vector count stays constant. Use `--reset` after
+removing or renaming source files, since a plain re-ingest won't garbage-collect
+point IDs that no longer correspond to a chunk.
 
-### Pinecone checklist
+## API
 
-- [x] **How the index is created:** `python ingest.py` calls `ensure_index()`
-  (`app/vectorstore.py`), which creates a **serverless** index automatically if
-  it doesn't exist — name from `PINECONE_INDEX_NAME`, dimension **768**, metric
-  **cosine**, on `PINECONE_CLOUD`/`PINECONE_REGION` (default `aws`/`us-east-1`,
-  available on the Pinecone free tier) — and waits until it reports ready. No
-  manual console step is required; creating an index with those exact settings
-  in the Pinecone console works too.
-- [x] **Env vars needed** (all listed in `.env.example`): `PINECONE_API_KEY`
-  (required), plus optional `PINECONE_INDEX_NAME`, `PINECONE_NAMESPACE`,
-  `PINECONE_CLOUD`, `PINECONE_REGION`. Embeddings also need `GOOGLE_API_KEY`.
-- [x] **What happens if you run ingest twice:** nothing duplicates — every
-  chunk has a **deterministic point ID** (`<file-stem>::<section-slug>::<n>`),
-  so the second run upserts the **same IDs** in place and the namespace vector
-  count stays constant (verified: 16 vectors after two consecutive runs).
-  `python ingest.py --reset` deletes the namespace first for a from-scratch
-  rebuild (use after removing or renaming corpus files, since orphaned IDs are
-  not garbage-collected by a plain re-ingest).
-
-## Run the server
-
-```bash
-uvicorn app.main:app --reload
-```
-
-- `GET /health` — liveness check (works even before keys are configured)
+- `GET /health` — liveness check, makes no external calls (works before keys are configured)
 - `POST /ask` — ask a question
+
+`POST /ask` request body:
+
+| Field | Type | Default | Meaning |
+|---|---|---|---|
+| `question` | string | required | The question to answer |
+| `include_trace` | bool | `false` | Include the graph execution trace in the response |
 
 ### Examples
 
@@ -107,7 +139,7 @@ Answerable question:
 ```bash
 curl -s -X POST http://127.0.0.1:8000/ask \
   -H "Content-Type: application/json" \
-  -d '{"question": "What is the notice period in the Bluecrest employment agreement?", "include_trace": true}'
+  -d '{"question": "What is the notice period in the employment agreement?", "include_trace": true}'
 ```
 
 ```json
@@ -132,7 +164,7 @@ curl -s -X POST http://127.0.0.1:8000/ask \
 }
 ```
 
-Out-of-scope question (refused, no citations):
+Question the documents don't cover — refused, with no citations:
 
 ```bash
 curl -s -X POST http://127.0.0.1:8000/ask \
@@ -148,7 +180,7 @@ curl -s -X POST http://127.0.0.1:8000/ask \
 }
 ```
 
-Error responses (exemplars — standard FastAPI `detail` envelope):
+Error responses (standard FastAPI `detail` envelope):
 
 ```json
 // 500 — server started without keys (.env missing or placeholder values)
@@ -164,15 +196,24 @@ Error responses (exemplars — standard FastAPI `detail` envelope):
 }
 ```
 
-The free tier allows ~20 requests/minute and each question costs 2+ model calls
-(grade + generate, plus rewrites on the bad path), so space manual requests
-~30s apart; the self-test suite backs off and retries automatically.
+### Trying it interactively
 
-Postman: import as a raw `POST http://127.0.0.1:8000/ask` request with the JSON
-bodies above, header `Content-Type: application/json`. Interactive docs are also
-available at http://127.0.0.1:8000/docs.
+- **Swagger UI:** http://127.0.0.1:8000/docs — no setup, works in the browser.
+- **IDE:** open [`api.http`](api.http) in VS Code (REST Client extension) or a
+  JetBrains IDE and click *Send Request* on any block.
+- **Postman:** *Import → Link* → `http://127.0.0.1:8000/openapi.json` builds the
+  whole collection from the OpenAPI spec; or create a `POST` to
+  `http://127.0.0.1:8000/ask` with a raw JSON body.
 
-## Self-tests
+### Free-tier rate limits
+
+Gemini's free tier allows roughly 20 requests/minute with per-model daily caps,
+and each question costs at least two model calls (grade + generate, plus one per
+rewrite on the bad path). Space manual requests out, or switch
+`GEMINI_CHAT_MODEL` to a model whose daily bucket is untouched. Quota errors
+surface as the `502` shape above; the test suite handles them automatically.
+
+## Tests
 
 With the corpus ingested and the server running:
 
@@ -180,18 +221,16 @@ With the corpus ingested and the server running:
 python tests/self_test.py
 ```
 
-The cases live in [`tests/self_test_cases.json`](tests/self_test_cases.json) —
-13 entries with columns `question`, `expected_citation_files`,
-`expected_answer_keywords`, `answerable`, and `notes` (pass/fail observations
-from actual runs). `tests/self_test.py` loads that file and runs every case:
-10 answerable questions (asserting expected facts in the answer **and** that
-citations point at the correct source file) and 3 out-of-scope questions
-(asserting refusal with zero citations). Exits non-zero on failure. Point at a
-different host with `API_URL=http://host:port`.
+Cases live in [`tests/self_test_cases.json`](tests/self_test_cases.json) — each
+entry has a `question`, the `expected_citation_files`, expected answer keywords,
+an `answerable` flag, and notes from the last verified run. The suite covers 10
+answerable questions (asserting both the expected facts **and** that citations
+resolve to the right source file) and 3 out-of-scope questions (asserting
+refusal with zero citations). It exits non-zero on failure, paces itself for
+free-tier limits, and retries through quota errors. Point it at another host
+with `API_URL=http://host:port`, and tune pacing with `SELF_TEST_PAUSE`.
 
-The suite is paced for the Gemini free tier (~10 requests/min): it pauses
-between cases (`SELF_TEST_PAUSE`, default 5s) and backs off and retries when it
-hits a 429 quota error, so a full run takes a few minutes on a free key.
+Adding a case is just another JSON object — no Python changes needed.
 
 ## Project layout
 
@@ -204,14 +243,19 @@ app/
   graph.py         # LangGraph StateGraph (retrieve -> grade -> answer/rewrite/refuse)
   main.py          # FastAPI: GET /health, POST /ask
 ingest.py          # ingestion CLI (--reset to wipe namespace)
-data/corpus/       # the provided fictional corpus
-tests/self_test.py # 13-case self-test suite
+data/corpus/       # sample fictional documents — swap in your own
+docs/langgraph.md  # node-by-node graph map + diagram
+tests/             # JSON-driven self-test suite
+api.http           # ready-made requests for IDE HTTP clients
 ```
 
-## Known omissions
+## Limitations and roadmap
 
-- No optional enhancements (LangSmith tracing, hybrid search, reranking) — the
-  `trace` field in `/ask` responses covers basic observability.
-- Chunk grading uses a single LLM judgment for the whole retrieved set rather
-  than per-chunk grading; adequate for a 6-document corpus.
-- No streaming responses; answers are returned as a single JSON object.
+- Chunk grading is a single judgment over the whole retrieved set rather than
+  per-chunk scoring — fine at this corpus size, worth revisiting for larger sets.
+- Dense retrieval only. Hybrid search and a reranking stage are the most
+  promising accuracy upgrades.
+- Responses are returned as a single JSON object; no streaming.
+- Observability is limited to the optional `trace` field. Wiring in LangSmith
+  would give proper per-node timings and token accounting.
+- Markdown-only ingestion. PDF and DOCX loaders would broaden the input set.

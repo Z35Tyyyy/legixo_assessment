@@ -1,3 +1,4 @@
+### Sourcebound — sample requests.
 ### Works with the VS Code "REST Client" extension or the JetBrains HTTP client.
 ### Start the server first: uvicorn app.main:app --reload
 ### Note: Gemini free tier ~20 req/min — space requests ~30s apart.
@@ -10,7 +11,7 @@ POST http://127.0.0.1:8000/ask
 Content-Type: application/json
 
 {
-  "question": "What is the notice period in the Bluecrest employment agreement?",
+  "question": "What is the notice period in the employment agreement?",
   "include_trace": true
 }
 
@@ -19,7 +20,7 @@ POST http://127.0.0.1:8000/ask
 Content-Type: application/json
 
 {
-  "question": "What is the monthly rent for Unit 4B at Harbor View Tower?"
+  "question": "What is the monthly rent and security deposit for the leased unit?"
 }
 
 ### Out-of-scope question -> grounded refusal, zero citations

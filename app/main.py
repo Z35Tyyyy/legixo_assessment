@@ -16,8 +16,8 @@ from app.config import ConfigError
 from app.graph import QAService
 
 app = FastAPI(
-    title="Legixo Take-Home Q&A API",
-    description="Grounded Q&A over a fictional legal corpus (LangGraph + Pinecone + Gemini).",
+    title="Sourcebound",
+    description="Answers questions only from an indexed document set, with verified citations.",
 )
 
 _service: QAService | None = None

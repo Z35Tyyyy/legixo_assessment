@@ -1,6 +1,6 @@
 """Pinecone integration: index lifecycle, upserts, and queries.
 
-Uses the real Pinecone service (serverless index) as required by the brief.
+Backed by a Pinecone serverless index, created on demand during ingestion.
 """
 
 import time
